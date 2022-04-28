@@ -23,19 +23,22 @@ class EmployeController extends Controller
 {
     public function confirmAcc(Request $request)
     {
-        $code = rand(100000, 1000000);
-        if (DB::select('select count(*) cp from confirmation_codes where email = ?', [$request->email])[0]->cp == 0) {
-            DB::insert('insert into confirmation_codes (code, email) values (?, ?)', [$code, $request->email]);
+        if (DB::select('select count(*) x from users where email = ?', [$request->email])[0]->x != 0) {
+            return response()->json("Email already used", 400);
         } else {
-            DB::update('update confirmation_codes set code = ? where email = ?', [$code, $request->email]);
+            $code = rand(100000, 1000000);
+            if (DB::select('select count(*) cp from confirmation_codes where email = ?', [$request->email])[0]->cp == 0) {
+                DB::insert('insert into confirmation_codes (code, email) values (?, ?)', [$code, $request->email]);
+            } else {
+                DB::update('update confirmation_codes set code = ? where email = ?', [$code, $request->email]);
+            }
+            $detail = [
+                'code' => $code,
+            ];
+            Mail::to($request->email)->send(new ConfirmAcc($detail));
+            return response()->json("a confirmation email has been sent... check your mail", 200);
         }
-        $detail = [
-            'code' => $code,
-        ];
-        Mail::to($request->email)->send(new ConfirmAcc($detail));
-        return response()->json("a confirmation email has been sent... check your mail", 200);
     }
-
 
     protected function registerOrLoginWithGoogle(Request $request)
     {
@@ -50,7 +53,9 @@ class EmployeController extends Controller
             $succes['token'] = $user->createToken('123')->accessToken;
             $succes['name'] = $user->firstName;
             $succes['message'] = 'success';
+            $succes['user_id'] = $user->id;
             $succes['role'] = '1';
+            $succes['email_verified_at'] = "null";
             $admins = User::where('role', 3)->get();
             $data = DB::select('select id,email,firstName,lastName,phone,photo,speciality,role,created_at from users where email=?', [$request->email]);
             Notification::send($admins, new NewAccountNotification($data));
@@ -59,7 +64,9 @@ class EmployeController extends Controller
         $succes['token'] = $user->createToken('123')->accessToken;
         $succes['name'] = $user->firstName;
         $succes['message'] = 'success';
+        $succes['user_id'] = $user->id;
         $succes['role'] = $user->role;
+        $succes['email_verified_at'] = $user->email_verified_at;
         return response()->json($succes, 200);
     }
 
@@ -84,12 +91,25 @@ class EmployeController extends Controller
             $user = User::create($input);
             $succes['token'] = $user->createToken('123')->accessToken;
             $succes['name'] = $user->firstName;
+            $succes['user_id'] = $user->id;
             $succes['role'] = '1';
+            $admins = User::where('role', 3)->get();
+            $data = DB::select('select id,email,firstName,lastName,phone,photo,speciality,role,created_at from users where email=?', [$request->email]);
+            Notification::send($admins, new NewAccountNotification($data));
             $succes['message'] = 'success';
             DB::delete('delete from confirmation_codes where email = ?', [$request->email]);
             return response()->json($succes, 201);
         } else {
             return response()->json("Invalide code", 401);
+        }
+    }
+
+    public function CompteVerifier()
+    {
+        if (DB::select('select email_verified_at from users where id=?', [Auth::id()])[0]->email_verified_at) {
+            return response()->json(true, 200);
+        } else {
+            return response()->json(false, 200);
         }
     }
 
@@ -101,6 +121,8 @@ class EmployeController extends Controller
                 $succes['token'] = $user->createToken('123')->accessToken;
                 $succes['role'] = $user->role;
                 $succes['name'] = $user->firstName;
+                $succes['user_id'] = $user->id;
+                $succes['email_verified_at'] = $user->email_verified_at;
                 return response()->json($succes, 200);
             } else {
                 return response()->json('unauthorized', 401);
@@ -219,7 +241,8 @@ class EmployeController extends Controller
     public function userPhoto()
     {
         $path = DB::select('select photo from users where id = ?', [Auth::id()]);
-        return response()->download(public_path($path[0]->photo), 'post image');
+        // return response()->download(public_path($path[0]->photo), 'post image');
+        return response()->json($path[0]->photo, 200);
     }
 
     public function userProfil(Request $request)
@@ -242,20 +265,14 @@ class EmployeController extends Controller
     public function updatePassword(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'old_password' => 'required|min:8',
             'new_password' => 'required|min:8',
             'c_new_password' => 'required|same:new_password',
         ]);
         if ($validate->fails()) {
             return response()->json($validate->errors(), 400);
         }
-        if (Auth::guard('web')->attempt(['email' => $request->email, 'password' => $request->old_password])) {
-            DB::update('update users set password = ? where id = ?', [Hash::make($request->new_password), Auth::id()]);
-            $succes['message'] = "Changed successfuly";
-            return response()->json($succes, 201);
-        } else {
-            $succes['message'] = "Incorrect old password";
-            return response()->json($succes, 401);
-        }
+        DB::update('update users set password = ? where id = ?', [Hash::make($request->new_password), Auth::id()]);
+        $succes['message'] = "Changed successfuly";
+        return response()->json($succes, 201);
     }
 }

@@ -34,6 +34,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('admin/listComptes', 'App\Http\Controllers\AdminController@listComptes');
     Route::put('admin/setRole/{id}', 'App\Http\Controllers\AdminController@setRole');
     Route::get('admin/search', 'App\Http\Controllers\AdminController@search');
+    Route::get('admin/adminNotification', 'App\Http\Controllers\AdminController@adminNotification');
+    Route::get('admin/adminNotificationMarkAsRead', 'App\Http\Controllers\AdminController@adminNotificationMarkAsRead');
 });
 
 //Employe routes
@@ -47,12 +49,12 @@ Route::get('employe/forgetPwdMessage', 'App\Http\Controllers\EmployeController@f
 Route::put('employe/resetForgetPwd/{id}', 'App\Http\Controllers\EmployeController@resetForgetPwd');
 Route::get('employe/resetForgetPwd/verifCode/{id}', 'App\Http\Controllers\EmployeController@verifCode');
 Route::middleware('auth:api')->group(function () {
+    Route::get('employe/CompteVerifier', 'App\Http\Controllers\EmployeController@CompteVerifier');
     Route::post('employe/updatePhoto', 'App\Http\Controllers\EmployeController@updatePhoto');
     Route::get('employe/userPhoto', 'App\Http\Controllers\EmployeController@userPhoto');
     Route::get('employe/userProfil', 'App\Http\Controllers\EmployeController@userProfil');
     Route::put('employe/updateProfil', 'App\Http\Controllers\EmployeController@updateProfil');
     Route::put('employe/updatePassword', 'App\Http\Controllers\EmployeController@updatePassword');
-    Route::get('notif/test/{id}', 'App\Http\Controllers\AdminController@test');
 });
 
 Route::post('employe/updatePhoto', 'App\Http\Controllers\EmployeController@updatePhoto');

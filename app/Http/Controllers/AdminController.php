@@ -64,7 +64,8 @@ class AdminController extends Controller
 
     public function approuverCompte($id, Request $request)
     {
-        DB::update('update users set email_verified_at = ? , role = ? where id = ?', [Carbon::now(), $request->role, $id]);
+        DB::update('update users set email_verified_at = ? , role = ? where id = ?', [date('Y-m-d H:i:s'), $request->role, $id]);
+        event(new \App\Events\ApprouverCompte($id));
         return response()->json('approuved ', 201);
     }
 
@@ -113,6 +114,13 @@ class AdminController extends Controller
     public function adminNotification()
     {
         $user = User::where('id', Auth::id())->first();
+        return response()->json($user->unreadNotifications, 201);
+    }
+
+    public function adminNotificationMarkAsRead()
+    {
+        $user = User::where('id', Auth::id())->first();
+        $user->unreadNotifications->markAsRead();
         return response()->json($user->unreadNotifications, 201);
     }
 }

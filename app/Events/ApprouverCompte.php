@@ -10,17 +10,19 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class AdminNotification implements ShouldBroadcast
+class ApprouverCompte implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $message;
     public $channel;
-
-    public function __construct($message)
+    /**
+     * Create a new event instance.
+     *
+     * @return void
+     */
+    public function __construct($id)
     {
-        $this->message = $message;
-        $this->channel = 'adminChannel';
+        $this->channel = 'channel' . strval($id);
     }
 
     public function broadcastOn()
@@ -30,6 +32,6 @@ class AdminNotification implements ShouldBroadcast
 
     public function broadcastAs()
     {
-        return 'my-event';
+        return 'ApprouverCompte';
     }
 }
