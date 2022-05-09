@@ -275,4 +275,17 @@ class EmployeController extends Controller
         $succes['message'] = "Changed successfuly";
         return response()->json($succes, 201);
     }
+
+    public function getEmployes()
+    {
+        $employes = DB::select('select id,email,firstName,lastName,phone,photo,speciality from users where (role = 1) and (email_verified_at is not null)');
+        $result = [];
+        foreach ($employes as $employe) {
+            array_push($result, [
+                'value' => $employe->firstName . " " . $employe->lastName,
+                'id' => $employe->id
+            ]);
+        }
+        return response()->json($result, 200);
+    }
 }

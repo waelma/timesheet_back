@@ -16,15 +16,14 @@ class Projects extends Migration
         Schema::create('projects', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
-            $table->longText('details');
-            $table->date('dateDebut');
-            $table->date('dateFin');
-            $table->enum('etat',['todo','inprogress','test','done'])->default('todo');
+            $table->longText('details')->nullable();
+            $table->date('dateDebut')->nullable();
+            $table->date('dateFin')->nullable();
+            $table->enum('etat', ['todo', 'inprogress', 'test', 'done'])->default('todo');
             $table->integer('chefP_id')->unsigned();
             $table->timestamps();
 
             $table->foreign('chefP_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
-
         });
     }
 

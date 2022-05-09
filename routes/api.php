@@ -34,8 +34,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('admin/listComptes', 'App\Http\Controllers\AdminController@listComptes');
     Route::put('admin/setRole/{id}', 'App\Http\Controllers\AdminController@setRole');
     Route::get('admin/search', 'App\Http\Controllers\AdminController@search');
-    Route::get('admin/adminNotification', 'App\Http\Controllers\AdminController@adminNotification');
-    Route::get('admin/adminNotificationMarkAsRead', 'App\Http\Controllers\AdminController@adminNotificationMarkAsRead');
+    Route::get('admin/adminNotification', 'App\Http\Controllers\NotificationController@adminNotification');
+    Route::get('admin/adminNotificationMarkAsRead', 'App\Http\Controllers\NotificationController@adminNotificationMarkAsRead');
 });
 
 //Employe routes
@@ -56,5 +56,10 @@ Route::middleware('auth:api')->group(function () {
     Route::put('employe/updateProfil', 'App\Http\Controllers\EmployeController@updateProfil');
     Route::put('employe/updatePassword', 'App\Http\Controllers\EmployeController@updatePassword');
 });
+Route::get('employe/getEmployes', 'App\Http\Controllers\EmployeController@getEmployes');
 
-Route::post('employe/updatePhoto', 'App\Http\Controllers\EmployeController@updatePhoto');
+//ChefProjet routes
+Route::middleware('auth:api')->group(function () {
+    Route::post('chefProjet/createProject', 'App\Http\Controllers\ProjectController@createProject');
+    Route::get('chefProjet/getChefProjects', 'App\Http\Controllers\ProjectController@getChefProjects');
+});
