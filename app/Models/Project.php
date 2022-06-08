@@ -17,8 +17,16 @@ class Project extends Model
         'chefP_id',
     ];
 
-    public function user()
+    public function users()
     {
         return $this->belongsTo('app\Models\User', 'chefP_id');
+    }
+    public function taches()
+    {
+        return $this->hasMany('App\Models\Tache', 'project_id');
+    }
+    public function employes_projects()
+    {
+        return $this->hasMany('App\Models\Employes_project', 'project_id');
     }
 }

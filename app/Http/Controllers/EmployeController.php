@@ -79,7 +79,7 @@ class EmployeController extends Controller
                 'phone' => 'required',
                 'lastName' => 'required',
                 'email' => 'required|email',
-                'speciality' => 'required',
+                // 'speciality' => 'required',
                 'password' => 'required|min:8',
                 'c_password' => 'required|same:password',
             ]);
@@ -94,7 +94,7 @@ class EmployeController extends Controller
             $succes['user_id'] = $user->id;
             $succes['role'] = '1';
             $admins = User::where('role', 3)->get();
-            $data = DB::select('select id,email,firstName,lastName,phone,photo,speciality,role,created_at from users where email=?', [$request->email]);
+            $data = DB::select('select id,email,firstName,lastName,phone,photo,role,created_at from users where email=?', [$request->email]);
             Notification::send($admins, new NewAccountNotification($data));
             $succes['message'] = 'success';
             DB::delete('delete from confirmation_codes where email = ?', [$request->email]);
@@ -278,14 +278,46 @@ class EmployeController extends Controller
 
     public function getEmployes()
     {
-        $employes = DB::select('select id,email,firstName,lastName,phone,photo,speciality from users where (role = 1) and (email_verified_at is not null)');
+        $employes = DB::select('select id,email,firstName,lastName,phone,photo from users where (role = 1) and (email_verified_at is not null)');
         $result = [];
         foreach ($employes as $employe) {
             array_push($result, [
                 'value' => $employe->firstName . " " . $employe->lastName,
-                'id' => $employe->id
+                'id' => $employe->id,
+                'first' => $employe->firstName,
+                'last' => $employe->lastName,
+                'email' => $employe->email,
+                'photo' => $employe->photo,
             ]);
         }
         return response()->json($result, 200);
+    }
+
+    public function getUsers()
+    {
+        $employes = DB::select('select id,email,firstName,lastName,phone,photo from users where (role <> 3) and (email_verified_at is not null)');
+        return response()->json($employes, 200);
+    }
+
+    public function getEmployeCalendar()
+    {
+        $calendar = DB::select('select T.name, T.dateFin from taches T, employes_taches E where E.user_id = ? and E.tache_id=T.id ', [Auth::id()]);
+        $t = ([]);
+        for ($i = 1; $i <= 12; $i++) {
+            $x = 100;
+            $j = 0;
+            foreach ($calendar as $cal) {
+                if (intval(substr($cal->dateFin, 5, 2)) == $i) {
+                    if (intval(substr($cal->dateFin, 8, 2)) != $x) $j = 0;
+                    $t[$i][intval(substr($cal->dateFin, 8, 2))][$j] =  $cal->name;
+                    $x = intval(substr($cal->dateFin, 8, 2));
+                    $j++;
+                }
+            }
+        }
+        return response()->json(
+            $t,
+            200
+        );
     }
 }

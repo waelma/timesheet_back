@@ -62,7 +62,6 @@ class NewAccountNotification extends Notification
             'lastName' => $this->account[0]->lastName,
             'phone' => $this->account[0]->phone,
             'photo' => $this->account[0]->photo,
-            'speciality' => $this->account[0]->speciality,
             'role' => $this->account[0]->role,
             'created_at' => $this->account[0]->created_at
         ]));
@@ -73,7 +72,6 @@ class NewAccountNotification extends Notification
             'lastName' => $this->account[0]->lastName,
             'phone' => $this->account[0]->phone,
             'photo' => $this->account[0]->photo,
-            'speciality' => $this->account[0]->speciality,
             'role' => $this->account[0]->role,
             'created_at' => $this->account[0]->created_at
         ];

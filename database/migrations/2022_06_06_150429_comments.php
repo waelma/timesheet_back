@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class Todos extends Migration
+class Comments extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,14 @@ class Todos extends Migration
      */
     public function up()
     {
-        Schema::create('todos', function (Blueprint $table) {
+        Schema::create('comments', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name');
-            $table->boolean('verified');
+            $table->longText('comment');
             $table->integer('tache_id')->unsigned();
             $table->timestamps();
+            $table->integer('user_id')->unsigned();
 
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('tache_id')->references('id')->on('taches')->onDelete('cascade')->onUpdate('cascade');
         });
     }
@@ -31,6 +32,6 @@ class Todos extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('todos');
+        //
     }
 }

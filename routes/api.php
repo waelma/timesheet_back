@@ -55,11 +55,43 @@ Route::middleware('auth:api')->group(function () {
     Route::get('employe/userProfil', 'App\Http\Controllers\EmployeController@userProfil');
     Route::put('employe/updateProfil', 'App\Http\Controllers\EmployeController@updateProfil');
     Route::put('employe/updatePassword', 'App\Http\Controllers\EmployeController@updatePassword');
+    Route::get('employe/getEmployeCalendar', 'App\Http\Controllers\EmployeController@getEmployeCalendar');
+    //Project
+    Route::get('project/groupeMessage/{id}', 'App\Http\Controllers\ProjectController@groupeMessage');
+    Route::post('project/addGroupeMessage', 'App\Http\Controllers\ProjectController@addGroupeMessage');
+    //Task
+    Route::get('task/getTask/{id}', 'App\Http\Controllers\TaskController@getTask');
+    Route::put('task/changeState/{id}', 'App\Http\Controllers\TaskController@changeState');
+    Route::post('task/addComment', 'App\Http\Controllers\TaskController@addComment');
+    //Message
+    Route::get('Messages/getMessages/{id}', 'App\Http\Controllers\MessageController@getMessages');
+    Route::post('Messages/sendMessage/{id}', 'App\Http\Controllers\MessageController@sendMessage');
 });
 Route::get('employe/getEmployes', 'App\Http\Controllers\EmployeController@getEmployes');
-
+Route::get('employe/getUsers', 'App\Http\Controllers\EmployeController@getUsers');
 //ChefProjet routes
 Route::middleware('auth:api')->group(function () {
     Route::post('chefProjet/createProject', 'App\Http\Controllers\ProjectController@createProject');
-    Route::get('chefProjet/getChefProjects', 'App\Http\Controllers\ProjectController@getChefProjects');
+    Route::get('chefProjet/getProjects', 'App\Http\Controllers\ProjectController@getProjects');
+    Route::get('project/getProject/{id}', 'App\Http\Controllers\ProjectController@getProject');
+    Route::delete('project/deleteProject/{id}', 'App\Http\Controllers\ProjectController@deleteProject');
+    Route::post('project/removeMember', 'App\Http\Controllers\ProjectController@removeMember');
+    Route::post('project/addMember', 'App\Http\Controllers\ProjectController@addMember');
+    Route::put('project/editTitle/{id}', 'App\Http\Controllers\ProjectController@editTitle');
+    Route::put('project/editDate/{id}', 'App\Http\Controllers\ProjectController@editDate');
+    Route::post('task/createTask', 'App\Http\Controllers\TaskController@createTask');
+    Route::delete(
+        'task/removeTask/{id}',
+        'App\Http\Controllers\TaskController@removeTask'
+    );
+    Route::post('task/addMember', 'App\Http\Controllers\TaskController@addMember');
+    Route::post(
+        'task/removeMember',
+        'App\Http\Controllers\TaskController@removeMember'
+    );
+    Route::put('task/editTitle/{id}', 'App\Http\Controllers\TaskController@editTitle');
+    Route::put('task/editDate/{id}', 'App\Http\Controllers\TaskController@editDate');
+    Route::put('task/editDescription/{id}', 'App\Http\Controllers\TaskController@editDescription');
+    Route::post('task/addTodo', 'App\Http\Controllers\TaskController@addTodo');
+    Route::put('task/verifiedTodo/{id}', 'App\Http\Controllers\TaskController@verifiedTodo');
 });
