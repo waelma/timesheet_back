@@ -63,10 +63,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('task/getTask/{id}', 'App\Http\Controllers\TaskController@getTask');
     Route::put('task/changeState/{id}', 'App\Http\Controllers\TaskController@changeState');
     Route::post('task/addComment', 'App\Http\Controllers\TaskController@addComment');
+    Route::post('task/deleteTodo/{id}', 'App\Http\Controllers\TaskController@deleteTodo');
     //Message
     Route::get('Messages/getMessages/{id}', 'App\Http\Controllers\MessageController@getMessages');
     Route::post('Messages/sendMessage/{id}', 'App\Http\Controllers\MessageController@sendMessage');
 });
+Route::get('project/getStatistcs/{id}', 'App\Http\Controllers\ProjectController@getStatistcs');
 Route::get('employe/getEmployes', 'App\Http\Controllers\EmployeController@getEmployes');
 Route::get('employe/getUsers', 'App\Http\Controllers\EmployeController@getUsers');
 //ChefProjet routes
@@ -95,3 +97,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('task/addTodo', 'App\Http\Controllers\TaskController@addTodo');
     Route::put('task/verifiedTodo/{id}', 'App\Http\Controllers\TaskController@verifiedTodo');
 });
+
+
+Route::post('project/uploadFiles/{id}', 'App\Http\Controllers\ProjectController@uploadFiles');
+Route::get('project/getFile', 'App\Http\Controllers\ProjectController@getFile');
+// Storage::get('\public\FileNameHere');

@@ -22,6 +22,7 @@ class MessageController extends Controller
     public function sendMessage($id, Request $request)
     {
         DB::insert('insert into messages (transmitter_id, receiver_id, message, date) values (?, ?, ?, ?)', [Auth::id(), $id, $request->message, $request->date]);
+        event(new \App\Events\MessagesUpdate($id));
         return response()->json("Message added", 200);
     }
 }

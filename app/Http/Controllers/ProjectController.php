@@ -9,6 +9,11 @@ use App\Models\User;
 use App\Models\Employes_project;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Carbon\Carbon;
+use Facade\FlareClient\Http\Response;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ProjectParticipate;
 
 class ProjectController extends Controller
 {
@@ -29,10 +34,15 @@ class ProjectController extends Controller
         ]);
         foreach ($request->tags as $employe) {
             DB::insert('insert into employes_projects (project_id,user_id) values (?, ?)', [$project->id, $employe['id']]);
+            $detail = [
+                'projectTitle' => $request->title
+            ];
+            Mail::to(DB::select('select email from users where id = ?', [$employe['id']])[0]->email)->send(new ProjectParticipate($detail));
         }
         foreach ($request->backlog as $tache) {
             DB::insert('insert into taches (project_id,name) values (?, ?)', [$project->id, $tache]);
         }
+        DB::insert('insert into project_historys (project_id,name,date) values (?, ?, ?)', [$project->id, "Create project", date('Y-m-d H:i:s')]);
         return response()->json($project, 201);
     }
 
@@ -100,6 +110,20 @@ class ProjectController extends Controller
                     $tache->comments = $comments;
                 }
             }
+            for ($i = 0; $i <= 3; $i++) {
+                foreach ($columns[$i]['cards'] as $tache) {
+                    $files = DB::select('select * from files where tache_id=? ', [$tache->id]);
+                    for ($j = 0; $j < sizeof($files); $j++) {
+                        $files[$j] = ([
+                            "uid" => $files[$j]->id,
+                            "url" => $files[$j]->url,
+                            "name" => substr($files[$j]->url, 46, strlen($files[$j]->url) - 46),
+                            "status" => "done",
+                        ]);
+                    }
+                    $tache->files = $files;
+                }
+            }
 
             $i = 0;
             $project->columns = $columns;
@@ -134,6 +158,7 @@ class ProjectController extends Controller
     public function addMember(Request $request)
     {
         DB::insert('insert into employes_projects (project_id , user_id) values (?, ?)', [$request->project_id, $request->user_id]);
+        Mail::to(DB::select('select email from users where id = ?', [$request->user_id])[0]->email)->send(new ProjectParticipate(DB::select('select name from projects where id = ?', [$request->project_id])[0]->name));
         return response()->json("Member added", 201);
     }
 
@@ -158,6 +183,88 @@ class ProjectController extends Controller
     public function addGroupeMessage(Request $request)
     {
         DB::insert('insert into groupe_messages (message, date, project_id, user_id ) values (?, ?, ?, ?)', [$request->message, $request->date, $request->project_id, $request->user_id]);
+        $participants = DB::select('select user_id from employes_projects where project_id = ?', [$request->project_id]);
+        foreach ($participants as $participant) {
+            if ($request->user_id != $participant->user_id)
+                event(new \App\Events\updateGroupeMessage($participant->user_id, $request->project_id));
+        }
+        $chefP_id = DB::select('select chefP_id from projects where id = ?', [$request->project_id])[0]->chefP_id;
+        if ($request->user_id != $chefP_id) {
+            event(new \App\Events\updateGroupeMessage($chefP_id, $request->project_id));
+        }
         return response()->json(DB::select('select firstName, lastName, photo from users where id = ?', [$request->user_id])[0], 200);
+    }
+
+    public function getStatistcs($id)
+    {
+        $taches = DB::select('select * from taches where project_id = ?', [$id]);
+        $total = 0;
+        foreach ($taches as $tache) {
+            $date1 = Carbon::parse(DB::select('select dateDebut from taches where id = ?', [$tache->id])[0]->dateDebut);
+            $date2 = Carbon::parse(DB::select('select dateFin from taches where id = ?', [$tache->id])[0]->dateFin);
+            $total += $date2->diffInDays($date1);
+        }
+        $consume = 0;
+        foreach ($taches as $tache) {
+            if ($tache->etat == "done") {
+                $date1 = Carbon::parse(DB::select('select dateDebut from taches where id = ?', [$tache->id])[0]->dateDebut);
+                $date2 = Carbon::parse(DB::select('select dateFin from taches where id = ?', [$tache->id])[0]->dateFin);
+                $consume += $date2->diffInDays($date1);
+            } else if ($tache->etat == "test") {
+                $date1 = Carbon::parse(DB::select('select dateDebut from taches where id = ?', [$tache->id])[0]->dateDebut);
+                $date2 = Carbon::parse(DB::select('select dateFin from taches where id = ?', [$tache->id])[0]->dateFin);
+                $consume += $date2->diffInDays($date1) * 0.9;
+            } else if ($tache->etat == "inprogress") {
+                $todos = DB::select('select * from todos where tache_id = ?', [$tache->id]);
+                if ($todos) {
+                    foreach ($todos as $todo) {
+                        if ($todo->verified == 1) {
+                            $date1 = Carbon::parse(DB::select('select dateDebut from taches where id = ?', [$tache->id])[0]->dateDebut);
+                            $date2 = Carbon::parse(DB::select('select dateFin from taches where id = ?', [$tache->id])[0]->dateFin);
+                            $nbTodos = DB::select('select count(*) cp from todos where tache_id = ?', [$tache->id])[0]->cp;
+                            $consume += $date2->diffInDays($date1) * (1 / $nbTodos) * 0.8;
+                        }
+                    }
+                }
+            }
+        }
+        if ($total) {
+            $progress = $consume / $total;
+        } else {
+            $progress = 0;
+        }
+
+        $project = DB::select('select * from projects where id = ?', [$id]);
+        $daysLeft = Carbon::parse($project[0]->dateFin)->diffInDays(Carbon::now());
+
+        $advance = $progress - (Carbon::parse($project[0]->dateDebut)->diffInDays(Carbon::now()) / Carbon::parse($project[0]->dateDebut)->diffInDays($project[0]->dateFin));
+        $estimatedDays = $daysLeft - (Carbon::parse($project[0]->dateDebut)->diffInDays($project[0]->dateFin) * $advance);
+        $statistcs = ([
+            "daysLeft" => $daysLeft,
+            "daysLeftPercent" => ($daysLeft / Carbon::parse($project[0]->dateDebut)->diffInDays($project[0]->dateFin)) * 100,
+            "progress" => $progress * 100,
+            "advance" => $advance * 100,
+            "estimatedDays" => $estimatedDays,
+            "history" => DB::select('select * from project_historys where project_id = ? order by date', [$id])
+        ]);
+        return response()->json($statistcs, 200);
+    }
+
+    public function uploadFiles($id, Request $request)
+    {
+        $input = $request->all();
+        $validate = Validator::make($input, [
+            'file' => 'required'
+        ]);
+        if ($validate->fails()) {
+            return response()->json($validate->errors(), 400);
+        }
+        $file = $request->file;
+        $newfile = time() . $file->getClientOriginalName();
+        $file->move('uploads/files', $newfile);
+        DB::insert('insert into files (tache_id, url) values (?, ?)', [$id, "http://localhost:8000/uploads/files/$newfile"]);
+        $succes["message"] = "succes";
+        $succes["newFile"] = $newfile;
+        return response()->json($newfile, 201);
     }
 }
