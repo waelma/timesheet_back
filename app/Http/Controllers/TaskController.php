@@ -8,6 +8,11 @@ use App\Models\Tache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Mockery\Undefined;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\EmployeeNotification;
+use App\Models\User;
+use App\Http\Controllers\ProjectController;
 
 use function PHPSTORM_META\map;
 
@@ -34,16 +39,34 @@ class TaskController extends Controller
                 }
             }
             DB::insert('insert into project_historys (project_id,name,date) values (?, ?, ?)', [$request->project_id, "Create $request->name", date('Y-m-d H:i:s')]);
+            ProjectController::setState($tache->id);
             return response()->json("Task created", 200);
         }
     }
-
+    public function archiveTask($id)
+    {
+        $tache = DB::select('select * from taches where id = ?', [$id]);
+        DB::update('update taches set deleted_at = ? where id = ?', [date('Y-m-d H:i:s'), $id]);
+        DB::delete('delete from project_historys where (name = ? or name=?) and project_id=?', [$tache[0]->name . " completed", "Create " . $tache[0]->name, $tache[0]->project_id]);
+        return response()->json("Task removed", 204);
+    }
     public function removeTask($id)
     {
         $tache = DB::select('select * from taches where id = ?', [$id]);
         DB::delete('delete from taches where id = ?', [$id]);
         DB::delete('delete from project_historys where (name = ? or name=?) and project_id=?', [$tache[0]->name . " completed", "Create " . $tache[0]->name, $tache[0]->project_id]);
-        return response()->json("Task removed", 204);
+        $this->getArchivedTask($tache[0]->project_id);
+    }
+    public function restoreTask($id)
+    {
+        DB::update('update taches set deleted_at = ? where id = ?', [null, $id]);
+        $tache = DB::select('select * from taches where id = ?', [$id]);
+        $this->getArchivedTask($tache[0]->project_id);
+    }
+
+    public function getArchivedTask($project_id)
+    {
+        return response()->json(DB::select('select id,name,details from taches where project_id = ? and deleted_at is not null', [$project_id]), 200);
     }
 
     public function changeState($id, Request $request)
@@ -69,8 +92,17 @@ class TaskController extends Controller
         if ($request->user_id != $chefP_id) {
             event(new \App\Events\ProjectUpdate($chefP_id));
         }
+        if ($request->state == "test" && $chefP_id != Auth::id()) {
+            $data = DB::select('select email,firstName,lastName,photo from users where id=?', [Auth::id()]);
+            $data[0]->id = $tache[0]->project_id;
+            $data[0]->content = "Moved task " . $tache[0]->name . " to test column in " . DB::select('select name from projects where id = ? ', [$tache[0]->project_id])[0]->name;
+            Notification::send(User::where('id', $chefP_id)->get(), new EmployeeNotification($data));
+            event(new \App\Events\NotificationEvent($chefP_id));
+        }
+        ProjectController::setState($id);
         return response()->json("state changed", 200);
     }
+
 
     public function getTask($id)
     {
@@ -79,6 +111,11 @@ class TaskController extends Controller
 
     public function addMember(Request $request)
     {
+        $data = DB::select('select email,firstName,lastName,photo from users where id=?', [Auth::id()]);
+        $data[0]->id = DB::select('select project_id from taches where id = ?', [$request->tache_id])[0]->project_id;
+        $data[0]->content = "assigned you to task " . DB::select('select name from taches where id = ?', [$request->tache_id])[0]->name . " in " . DB::select('select P.name from projects P, taches T where T.id = ? and T.project_id=P.id', [$request->tache_id])[0]->name;
+        Notification::send(User::where('id', $request->user_id)->get(), new EmployeeNotification($data));
+        event(new \App\Events\NotificationEvent($request->user_id));
         return response()->json(DB::insert('insert into employes_taches (user_id, tache_id) values (?, ?)', [$request->user_id, $request->tache_id]), 201);
     }
 
@@ -142,5 +179,48 @@ class TaskController extends Controller
             event(new \App\Events\CommentsUpdate($chefP_id, $comments));
         }
         return response()->json(DB::select('select firstName, lastName, photo from users where id = ?', [$request->user_id])[0], 201);
+    }
+    public function uploadFiles($id, Request $request)
+    {
+        $input = $request->all();
+        $validate = Validator::make($input, [
+            'file' => 'required'
+        ]);
+        if ($validate->fails()) {
+            return response()->json($validate->errors(), 400);
+        }
+        $file = $request->file;
+        $newfile = time() . $file->getClientOriginalName();
+        $file->move('uploads/files', $newfile);
+        DB::insert('insert into files (tache_id, url) values (?, ?)', [$id, "http://localhost:8000/uploads/files/$newfile"]);
+        $succes["message"] = "succes";
+        $succes["newFile"] = $newfile;
+        return response()->json($newfile, 201);
+    }
+    public function getFiles($id)
+    {
+        $files = DB::select('select * from files where tache_id=? ', [$id]);
+        for ($j = 0; $j < sizeof($files); $j++) {
+            $files[$j] = ([
+                "uid" => $files[$j]->id,
+                "url" => $files[$j]->url,
+                "name" => substr($files[$j]->url, 46, strlen($files[$j]->url) - 46),
+                "status" => "done",
+            ]);
+        }
+        return response()->json($files, 200);
+    }
+    public function deleteFile($id)
+    {
+        $files = DB::select('select * from files where tache_id=? ', [$id]);
+        for ($j = 0; $j < sizeof($files); $j++) {
+            $files[$j] = ([
+                "uid" => $files[$j]->id,
+                "url" => $files[$j]->url,
+                "name" => substr($files[$j]->url, 46, strlen($files[$j]->url) - 46),
+                "status" => "done",
+            ]);
+        }
+        return response()->json($files, 200);
     }
 }

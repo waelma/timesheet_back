@@ -301,7 +301,7 @@ class EmployeController extends Controller
 
     public function getEmployeCalendar()
     {
-        $calendar = DB::select('select T.name, T.dateFin from taches T, employes_taches E where E.user_id = ? and E.tache_id=T.id ', [Auth::id()]);
+        $calendar = DB::select('select T.name, T.dateFin from taches T, employes_taches E where T.deleted_at is null and E.user_id = ? and E.tache_id=T.id ', [Auth::id()]);
         $t = ([]);
         for ($i = 1; $i <= 12; $i++) {
             $x = 100;

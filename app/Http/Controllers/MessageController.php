@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\EmployeeNotification;
 
 class MessageController extends Controller
 {
@@ -23,6 +26,10 @@ class MessageController extends Controller
     {
         DB::insert('insert into messages (transmitter_id, receiver_id, message, date) values (?, ?, ?, ?)', [Auth::id(), $id, $request->message, $request->date]);
         event(new \App\Events\MessagesUpdate($id));
-        return response()->json("Message added", 200);
+        $data = DB::select('select id,email,firstName,lastName,photo from users where id=?', [Auth::id()]);
+        $data[0]->content = "sent you a message";
+        Notification::send(User::where('id', $id)->get(), new EmployeeNotification($data));
+        event(new \App\Events\NotificationEvent($id));
+        return response()->json("Message send successfuly", 200);
     }
 }

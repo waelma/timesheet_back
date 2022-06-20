@@ -22,13 +22,13 @@ class NotificationController extends Controller
     //     return response()->json($users, 201);
     // }
 
-    public function adminNotification()
+    public function notifications()
     {
         $user = User::where('id', Auth::id())->first();
-        return response()->json($user->unreadNotifications, 201);
+        return response()->json($user->unreadNotifications, 200);
     }
 
-    public function adminNotificationMarkAsRead()
+    public function notificationMarkAsRead()
     {
         $user = User::where('id', Auth::id())->first();
         $user->unreadNotifications->markAsRead();

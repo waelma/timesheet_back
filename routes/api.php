@@ -34,8 +34,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('admin/listComptes', 'App\Http\Controllers\AdminController@listComptes');
     Route::put('admin/setRole/{id}', 'App\Http\Controllers\AdminController@setRole');
     Route::get('admin/search', 'App\Http\Controllers\AdminController@search');
-    Route::get('admin/adminNotification', 'App\Http\Controllers\NotificationController@adminNotification');
-    Route::get('admin/adminNotificationMarkAsRead', 'App\Http\Controllers\NotificationController@adminNotificationMarkAsRead');
+    Route::get('admin/adminNotification', 'App\Http\Controllers\NotificationController@notifications');
+    Route::get('admin/adminNotificationMarkAsRead', 'App\Http\Controllers\NotificationController@notificationMarkAsRead');
 });
 
 //Employe routes
@@ -64,9 +64,13 @@ Route::middleware('auth:api')->group(function () {
     Route::put('task/changeState/{id}', 'App\Http\Controllers\TaskController@changeState');
     Route::post('task/addComment', 'App\Http\Controllers\TaskController@addComment');
     Route::post('task/deleteTodo/{id}', 'App\Http\Controllers\TaskController@deleteTodo');
+    Route::post('task/uploadFiles/{id}', 'App\Http\Controllers\TaskController@uploadFiles');
     //Message
     Route::get('Messages/getMessages/{id}', 'App\Http\Controllers\MessageController@getMessages');
     Route::post('Messages/sendMessage/{id}', 'App\Http\Controllers\MessageController@sendMessage');
+    //Notifications
+    Route::get('employee/employeeNotifications', 'App\Http\Controllers\NotificationController@notifications');
+    Route::get('employee/employeeNotificationMarkAsRead', 'App\Http\Controllers\NotificationController@notificationMarkAsRead');
 });
 Route::get('project/getStatistcs/{id}', 'App\Http\Controllers\ProjectController@getStatistcs');
 Route::get('employe/getEmployes', 'App\Http\Controllers\EmployeController@getEmployes');
@@ -76,6 +80,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('chefProjet/createProject', 'App\Http\Controllers\ProjectController@createProject');
     Route::get('chefProjet/getProjects', 'App\Http\Controllers\ProjectController@getProjects');
     Route::get('project/getProject/{id}', 'App\Http\Controllers\ProjectController@getProject');
+    Route::delete('project/archiveProject/{id}', 'App\Http\Controllers\ProjectController@archiveProject');
+    Route::get('project/getArchiveProjects', 'App\Http\Controllers\ProjectController@getArchiveProjects');
+    Route::put('project/restoreProject/{id}', 'App\Http\Controllers\ProjectController@restoreProject');
     Route::delete('project/deleteProject/{id}', 'App\Http\Controllers\ProjectController@deleteProject');
     Route::post('project/removeMember', 'App\Http\Controllers\ProjectController@removeMember');
     Route::post('project/addMember', 'App\Http\Controllers\ProjectController@addMember');
@@ -83,8 +90,16 @@ Route::middleware('auth:api')->group(function () {
     Route::put('project/editDate/{id}', 'App\Http\Controllers\ProjectController@editDate');
     Route::post('task/createTask', 'App\Http\Controllers\TaskController@createTask');
     Route::delete(
-        'task/removeTask/{id}',
+        'task/archiveTask/{id}',
+        'App\Http\Controllers\TaskController@archiveTask'
+    );
+    Route::delete(
+        'task/deleteTask/{id}',
         'App\Http\Controllers\TaskController@removeTask'
+    );
+    Route::get(
+        'task/restoreTask/{id}',
+        'App\Http\Controllers\TaskController@restoreTask'
     );
     Route::post('task/addMember', 'App\Http\Controllers\TaskController@addMember');
     Route::post(
@@ -96,9 +111,12 @@ Route::middleware('auth:api')->group(function () {
     Route::put('task/editDescription/{id}', 'App\Http\Controllers\TaskController@editDescription');
     Route::post('task/addTodo', 'App\Http\Controllers\TaskController@addTodo');
     Route::put('task/verifiedTodo/{id}', 'App\Http\Controllers\TaskController@verifiedTodo');
+    Route::get('task/getArchivedTask/{id}', 'App\Http\Controllers\TaskController@getArchivedTask');
 });
 
 
-Route::post('project/uploadFiles/{id}', 'App\Http\Controllers\ProjectController@uploadFiles');
-Route::get('project/getFile', 'App\Http\Controllers\ProjectController@getFile');
-// Storage::get('\public\FileNameHere');
+
+Route::get('task/getTaskFiles/{id}', 'App\Http\Controllers\TaskController@getFiles');
+
+
+Route::get('project/setState/{id}', 'App\Http\Controllers\ProjectController@setState');

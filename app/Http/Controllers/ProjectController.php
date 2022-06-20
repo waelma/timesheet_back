@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Project;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use App\Models\Tache;
 use App\Models\Employes_project;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -48,7 +49,7 @@ class ProjectController extends Controller
 
     public function getProjects()
     {
-        return response()->json(DB::select('select name,etat,id from projects where chefP_id=? or id in (select project_id from employes_projects where user_id=?)', [Auth::id(), Auth::id()]), 200);
+        return response()->json(DB::select('select name,etat,id from projects where deleted_at is null and( chefP_id=? or id in (select project_id from employes_projects where user_id=?))', [Auth::id(), Auth::id()]), 200);
     }
 
     public function participe($idP, $idU)
@@ -71,22 +72,22 @@ class ProjectController extends Controller
                 [
                     "id" => 0,
                     "title" => "Backlog",
-                    "cards" => DB::select('select id,dateDebut dateD,dateFin dateF,name title,details description,dateFin,etat state,project_id  from taches where project_id=? and etat=?', [$id, "todo"]),
+                    "cards" => DB::select('select id,dateDebut dateD,dateFin dateF,name title,details description,dateFin,etat state,project_id  from taches where deleted_at is null and project_id=? and etat=?', [$id, "todo"]),
                 ],
                 [
                     "id" => 1,
                     'title' => "Doing",
-                    "cards" => DB::select('select id,dateDebut dateD,dateFin dateF, name title,details description,dateFin,etat state,project_id  from taches where project_id=? and etat=?', [$id, "inprogress"]),
+                    "cards" => DB::select('select id,dateDebut dateD,dateFin dateF, name title,details description,dateFin,etat state,project_id  from taches where deleted_at is null and project_id=? and etat=?', [$id, "inprogress"]),
                 ],
                 [
                     "id" => 2,
                     'title' => "Test",
-                    "cards" => DB::select('select id,dateDebut dateD,dateFin dateF,name title,details description,dateFin,etat state,project_id  from taches where project_id=? and etat=?', [$id, "test"])
+                    "cards" => DB::select('select id,dateDebut dateD,dateFin dateF,name title,details description,dateFin,etat state,project_id  from taches where deleted_at is null and project_id=? and etat=?', [$id, "test"])
                 ],
                 [
                     "id" => 3,
                     'title' => "Finish",
-                    "cards" => DB::select('select id,dateDebut dateD,dateFin dateF,name title,details description,dateFin,etat state,project_id  from taches where project_id=? and etat=?', [$id, "done"])
+                    "cards" => DB::select('select id,dateDebut dateD,dateFin dateF,name title,details description,dateFin,etat state,project_id  from taches where deleted_at is null and project_id=? and etat=?', [$id, "done"])
                 ]
             ]);
             for ($i = 0; $i <= 3; $i++) {
@@ -138,9 +139,9 @@ class ProjectController extends Controller
         }
     }
 
-    public function deleteProject($id)
+    public function archiveProject($id)
     {
-        return response()->json(DB::delete('delete from projects where id = ?', [$id]), 204);
+        return response()->json(DB::update('update projects set deleted_at = ? where id = ?', [date('Y-m-d H:i:s'), $id]), 204);
     }
 
     public function editTitle($id, Request $request)
@@ -197,7 +198,7 @@ class ProjectController extends Controller
 
     public function getStatistcs($id)
     {
-        $taches = DB::select('select * from taches where project_id = ?', [$id]);
+        $taches = DB::select('select * from taches where deleted_at is null and project_id = ?', [$id]);
         $total = 0;
         foreach ($taches as $tache) {
             $date1 = Carbon::parse(DB::select('select dateDebut from taches where id = ?', [$tache->id])[0]->dateDebut);
@@ -250,21 +251,50 @@ class ProjectController extends Controller
         return response()->json($statistcs, 200);
     }
 
-    public function uploadFiles($id, Request $request)
+    public static function setState($tache_id)
     {
-        $input = $request->all();
-        $validate = Validator::make($input, [
-            'file' => 'required'
-        ]);
-        if ($validate->fails()) {
-            return response()->json($validate->errors(), 400);
+        $done = true;
+        $inprogress = false;
+        $test = true;
+        $project_id = Tache::where('id', $tache_id)->get()[0]->project_id;
+        $taches = DB::select('select etat from taches where project_id = ?', [$project_id]);
+        foreach ($taches as $tache) {
+            if ($tache->etat != "done") {
+                $done = false;
+            }
+            if ($tache->etat != "test") {
+                $test = false;
+            }
+            if ($tache->etat != "todo") {
+                $inprogress = true;
+            }
         }
-        $file = $request->file;
-        $newfile = time() . $file->getClientOriginalName();
-        $file->move('uploads/files', $newfile);
-        DB::insert('insert into files (tache_id, url) values (?, ?)', [$id, "http://localhost:8000/uploads/files/$newfile"]);
-        $succes["message"] = "succes";
-        $succes["newFile"] = $newfile;
-        return response()->json($newfile, 201);
+        if ($done) {
+            DB::update('update projects set etat = ? where id = ?', ["done", $project_id]);
+        } else if ($test) {
+            DB::update('update projects set etat = ? where id = ?', ["test", $project_id]);
+        } else if ($inprogress) {
+            DB::update('update projects set etat = ? where id = ?', ["inprogress", $project_id]);
+        } else {
+            DB::update('update projects set etat = ? where id = ?', ["todo", $project_id]);
+        }
+        return true;
+    }
+
+    public function getArchiveProjects()
+    {
+        return response()->json(DB::select('select name,etat,id from projects where deleted_at is not null and chefP_id=?', [Auth::id()]), 200);
+    }
+
+    public function restoreProject($id)
+    {
+        DB::update('update projects set deleted_at = ?  where id = ?', [null, $id]);
+        return response()->json(DB::select('select name,etat,id from projects where deleted_at is not null and chefP_id=?', [Auth::id()]), 200);
+    }
+
+    public function deleteProject($id)
+    {
+        DB::delete('delete from projects where id = ?', [$id]);
+        return response()->json(DB::select('select name,etat,id from projects where deleted_at is not null and chefP_id=?', [Auth::id()]), 200);
     }
 }
