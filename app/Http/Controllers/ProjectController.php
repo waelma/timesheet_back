@@ -35,10 +35,10 @@ class ProjectController extends Controller
         ]);
         foreach ($request->tags as $employe) {
             DB::insert('insert into employes_projects (project_id,user_id) values (?, ?)', [$project->id, $employe['id']]);
-            $detail = [
-                'projectTitle' => $request->title
-            ];
-            Mail::to(DB::select('select email from users where id = ?', [$employe['id']])[0]->email)->send(new ProjectParticipate($detail));
+            // $detail = [
+            //     'projectTitle' => $request->title
+            // ];
+            // Mail::to(DB::select('select email from users where id = ?', [$employe['id']])[0]->email)->send(new ProjectParticipate($detail));
         }
         foreach ($request->backlog as $tache) {
             DB::insert('insert into taches (project_id,name) values (?, ?)', [$project->id, $tache]);
@@ -254,10 +254,10 @@ class ProjectController extends Controller
     public static function setState($tache_id)
     {
         $done = true;
-        $inprogress = false;
         $test = true;
+        $todo = true;
         $project_id = Tache::where('id', $tache_id)->get()[0]->project_id;
-        $taches = DB::select('select etat from taches where project_id = ?', [$project_id]);
+        $taches = DB::select('select etat from taches where project_id = ? and deleted_at is null', [$project_id]);
         foreach ($taches as $tache) {
             if ($tache->etat != "done") {
                 $done = false;
@@ -266,17 +266,17 @@ class ProjectController extends Controller
                 $test = false;
             }
             if ($tache->etat != "todo") {
-                $inprogress = true;
+                $todo = false;
             }
         }
         if ($done) {
             DB::update('update projects set etat = ? where id = ?', ["done", $project_id]);
         } else if ($test) {
             DB::update('update projects set etat = ? where id = ?', ["test", $project_id]);
-        } else if ($inprogress) {
-            DB::update('update projects set etat = ? where id = ?', ["inprogress", $project_id]);
-        } else {
+        } else if ($todo) {
             DB::update('update projects set etat = ? where id = ?', ["todo", $project_id]);
+        } else {
+            DB::update('update projects set etat = ? where id = ?', ["inprogress", $project_id]);
         }
         return true;
     }

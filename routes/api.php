@@ -80,6 +80,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('chefProjet/createProject', 'App\Http\Controllers\ProjectController@createProject');
     Route::get('chefProjet/getProjects', 'App\Http\Controllers\ProjectController@getProjects');
     Route::get('project/getProject/{id}', 'App\Http\Controllers\ProjectController@getProject');
+    Route::get('project/getProjectEmployes/{id}', 'App\Http\Controllers\ProjectController@getProjectEmployes');
     Route::delete('project/archiveProject/{id}', 'App\Http\Controllers\ProjectController@archiveProject');
     Route::get('project/getArchiveProjects', 'App\Http\Controllers\ProjectController@getArchiveProjects');
     Route::put('project/restoreProject/{id}', 'App\Http\Controllers\ProjectController@restoreProject');

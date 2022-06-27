@@ -1,0 +1,56 @@
+Une bonne gestion du temps est l’objectif de toutes les entreprises en raison de son importance dans 
+la facilitation des affaires. Et pour l’améliorer, on a besoin d'une application de gestion du temps qui
+aide les employés de notre entreprise à planifier d'une façon plus professionnelle leur travail et qui gère
+la gestion des projets et permet le pilotage et la supervision des tâches en cours.
+
+
+Les acteurs en interaction avec notre application sont :
+-l'administrateur: Il s’agit d’un responsable technique qui gère les comptes utilisateurs.
+-les employés: Tous les  employés de l’entreprise doivent pouvoir créer des comptes et accéder à leur espace de travail pour voir 
+les taches dont les quelles il est affecté et pour planifier son travail et partager ce planning avec les membres de son équipe.
+-les chefs de projets: sont des employés, mais ont en plus la capacité a creer des projets et a affecter des employes a des taches 
+de ces projets et de superviser le planning et le travail des employes.  
+
+
+Authentification
+• chaque employe doit creer un compte (avec une verifition par mail)
+• l’utilisateur / Administrateur doit s’authentifier pour acceder a son espace de travail.
+• Interfaces sécurisées par un cle (token)
+• Gestion d’oubli de mot de passe (par message/mail) 
+Gère les comptes utilisateurs (administrateur)
+• Approuver ou non la création d'un nouveau compte
+• Affectation/Modification les roles des employes
+planification des projets et des taches(employe/chef de projet)
+• création, consultation, modification des projets
+• Decouper le projet a des taches et sous taches
+• Affectation des collaborateurs aux taches
+• Préparer un tableau kanban global ou détaillé pour un projet
+• Approbation de feuille de temps par le chef hiérarchique 
+• Partager le travail au sein d'une équipe et echange de documents.
+Gestion des Rapports
+• Consultation et suivi de l'avancement des projets et des tâches
+• Comparaison entre le prévisionnel et le réel
+• Statistique des charges (en temps) par projet et par employe
+Gestion des Alertes 
+• Une alerte envoyée pour le rappel de la date de deadline.
+Gestion des notifications 
+• Notifier l'employe lorsqu'il est affecté a un projet
+• Notifier le chef de projet lorsque un employe termine sa tache, pour la consulter.
+
+La fiabilité
+• Tolérance aux fautes
+• Possibilité de récupération
+utilisabilité
+• Facilité de compréhension.
+• Facilité d’apprentissage.
+• Facilité d’exploitation/d’utilisation.
+• Attractivité (Le site doit donner une image moderne de l’entreprise).
+maintenabilité
+• Facilité d’analyse.
+• Facilité de modification.
+• Stabilité.
+• Testabilité.
+
+L’application sera basée sur du développement spécifique en langage PHP8 
+( Framework Laravel 8 ), HTML,CSS3 et Java script (Bibliothèque React JS) sur 
+un serveur Web Apache sous Windows avec une base de données MySQL administrée sous phpMyAdmin

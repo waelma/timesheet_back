@@ -1,0 +1,16 @@
+Mesurer l’avancement d’une tâche, d’une activité ou d’un projet, ça permet de savoir où on en est, de voir la progression, 
+d’évaluer ce qu’il reste à parcourir  / accomplir. Cela permet de voir si on prend du retard, cela permet de re-négocier 
+une date de livraison à l’avance, de renforcer l’équipe, etc. Bref, l’avancement est un indicateur d’aide à la décision.
+
+
+
+nous avons donné une brève description l’architecture technique et 
+logicielle.  nous avons met en valeur sur les Frameworks Front-end et Back-end, les 
+APIs et les outils de développements et de conception utilisés pour la réalisation de ce projet.
+
+
+Dans ce chapitre nous allons détailler le premier sprint de notre projet. Ce sprint sera traitée pendant 4 semaines, 
+il se concentre sur les fonctions de base de l’application qui sont les suivantes: Demande d'inscription , 
+gestion des demandes d'inscription , authentification , 
+gestion des comptes utilisateurs , gestion de profile, gestion des projets et gestion des tâches . 
+L'études de ce sprint couvre l'analyse, la conception et sa mise en œuvre.

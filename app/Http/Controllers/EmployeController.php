@@ -79,7 +79,6 @@ class EmployeController extends Controller
                 'phone' => 'required',
                 'lastName' => 'required',
                 'email' => 'required|email',
-                // 'speciality' => 'required',
                 'password' => 'required|min:8',
                 'c_password' => 'required|same:password',
             ]);
@@ -159,11 +158,11 @@ class EmployeController extends Controller
             } else {
                 DB::update('update confirmation_codes set code = ? where phone = ?', [$code, $phone]);
             }
-            // Nexmo::message()->send([
-            //     "to" => "+216" . strval($phone),
-            //     "from" => "22207999",
-            //     "text" => strval($code) . " est le code de réinitialisation de votre mot de passe Pointache"
-            // ]);
+            Nexmo::message()->send([
+                "to" => "+216" . strval($phone),
+                "from" => "22207999",
+                "text" => strval($code) . " est le code de réinitialisation de votre mot de passe Pointache"
+            ]);
             $success["message"] = "success";
             $phone = substr_replace($phone, "****", 3, 4);
             $success["phone"] = $phone;
